@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Guerra de Pizza — Protótipo</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#17251f;color:#fff;font-family:system-ui,sans-serif;touch-action:none}
+canvas{display:block;position:fixed;inset:0;width:100vw;height:100vh;z-index:0}
+#hud{position:fixed;inset:0;z-index:2;pointer-events:none;text-shadow:0 2px 4px #000}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.pill{background:#101820d9;border:1px solid #ffffff44;border-radius:11px;padding:7px 10px;font-weight:750;font-size:13px}
+#help{position:absolute;top:58px;left:10px;max-width:220px;background:#101820aa;border-radius:9px;padding:7px;font-size:11px}
+#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:25px;color:#fff}
+#msg{position:absolute;top:23%;left:50%;transform:translateX(-50%);font-size:22px;color:#ffd35a;font-weight:900;text-align:center}
+#bottom{position:absolute;bottom:12px;left:10px;right:10px;display:flex;justify-content:space-between}
+#controls{position:fixed;inset:0;pointer-events:none}
+#stick{position:absolute;left:18px;bottom:25px;width:120px;height:120px;border-radius:50%;background:#ffffff20;border:2px solid #ffffff66;pointer-events:auto}
+#nub{position:absolute;left:35px;top:35px;width:46px;height:46px;border-radius:50%;background:#ffffff99}
+.ctrl{position:absolute;pointer-events:auto;border:2px solid white;color:white;font-weight:900}
+#fire{right:20px;bottom:38px;width:78px;height:78px;border-radius:50%;background:#c83e2c}
+#reload{right:110px;bottom:48px;width:62px;height:50px;border-radius:13px;background:#273c4b}
+#loot{right:25px;bottom:132px;width:78px;height:42px;border-radius:12px;background:#e6b23c;color:#191919}
+#start{position:fixed;z-index:10;inset:0;background:linear-gradient(#071018d9,#071018f2);display:flex;align-items:center;justify-content:center;padding:20px;text-align:center}
+.panel{max-width:430px;background:#101820ed;border:1px solid #ffffff44;border-radius:22px;padding:23px;box-shadow:0 15px 55px #0009}
+h1{font-size:clamp(34px,10vw,54px);line-height:.95;margin:0 0 10px;color:#ffb52e;text-shadow:3px 3px #8d271c}
+small{color:#cbd5d1;line-height:1.45}#play{border:0;border-radius:12px;background:#e84b2b;color:#fff;font-weight:900;padding:13px 24px;font-size:18px;margin-top:12px}select,input,button{font-family:inherit}
+</style></head><body>
+<canvas id="game"></canvas>
+<div id="hud"><div id="top"><div class="pill">🍕 GUERRA DE PIZZA</div><div class="pill" id="alive">30/30 vivos</div><div class="pill" id="weapon">Pistola · 12/48</div></div>
+<div id="help">Arraste o controle esquerdo para andar. Arraste o lado direito da tela para olhar. Pegue a caixa amarela para trocar de arma.</div><div id="cross">＋</div><div id="msg"></div>
+<div id="bottom"><div class="pill" id="hp">❤ 100</div><div class="pill" id="zone">Zona fecha em 90s</div><div class="pill" id="kills">Eliminações: 0</div></div></div>
+<div id="controls"><div id="stick"><div id="nub"></div></div><button class="ctrl" id="loot">PEGAR</button><button class="ctrl" id="reload">RECARREGAR</button><button class="ctrl" id="fire">ATIRAR</button></div>
+<div id="endScreen" style="display:none;position:fixed;inset:0;background:#071018eF;align-items:center;justify-content:center;padding:20px;text-align:center;z-index:20"><div class="panel"><h1 id="endTitle">FIM DE JOGO</h1><p id="endText">Resultado da partida</p><button id="again" style="width:100%;padding:14px;border:0;border-radius:12px;background:#e84b2b;color:white;font-weight:900;font-size:18px">JOGAR NOVAMENTE</button><button id="backLobby" style="width:100%;padding:12px;border:1px solid #fff5;border-radius:12px;background:#26343d;color:white;font-weight:800;margin-top:8px">VOLTAR AO LOBBY</button></div></div><div id="start"><div class="panel" id="authPanel" style="display:none"><h1>GUERRA<br>DE PIZZA</h1><p><b>Entre para jogar</b></p>
+<button id="googleLogin" style="width:100%;padding:12px;border-radius:11px;border:1px solid #ddd;background:#fff;color:#222;font-weight:800;margin:5px 0">Continuar com Google</button>
+<button id="appleLogin" style="width:100%;padding:12px;border-radius:11px;border:1px solid #aaa;background:#050505;color:#fff;font-weight:800;margin:5px 0">Continuar com Apple</button>
+<p style="margin:12px 0 6px">ou use sua conta Guerra de Pizza</p>
+<input id="nickname" autocomplete="username" placeholder="Seu usuário" style="width:100%;padding:12px;border-radius:9px;border:1px solid #aaa;margin:4px 0;font-size:16px">
+<input id="password" type="password" autocomplete="current-password" placeholder="Sua senha" style="width:100%;padding:12px;border-radius:9px;border:1px solid #aaa;margin:4px 0;font-size:16px">
+<button id="accountLogin" style="width:100%;padding:12px;border:0;border-radius:10px;background:#e84b2b;color:#fff;font-weight:900;margin-top:7px">Entrar / Criar conta de demonstração</button>
+<button id="guestLogin" style="width:100%;padding:13px;border:2px solid #ffb52e;border-radius:10px;background:#26343d;color:#fff;font-weight:900;margin-top:9px;font-size:17px">JOGAR COMO CONVIDADO</button>
+<small id="authNote" style="display:block;margin-top:10px">Protótipo de interface: Google, Apple e contas próprias ainda precisam ser ligados a um serviço de autenticação seguro.</small>
+</div>
+<div class="panel" id="lobbyPanel" style="display:block;width:min(430px,94vw);max-height:90vh;overflow:auto">
+<h1>GUERRA<br>DE PIZZA</h1><p id="welcome"><b>Olá, Convidado! Você já pode jogar.</b></p>
+<p style="font-weight:900;color:#ffbf45">LOBBY · BATTLE ROYALE</p>
+<label for="mode" style="display:block;text-align:left;margin:10px 0 5px">Modo de jogo</label>
+<select id="mode" style="width:100%;padding:12px;border-radius:10px;font-size:16px">
+<option value="Solo">Solo · 1 jogador</option><option value="Dupla">Dupla · 2 jogadores</option><option value="Squad" selected>Squad · 4 jogadores</option></select>
+<div style="display:flex;justify-content:space-between;gap:8px;margin:12px 0">
+<div style="background:#24343a;padding:12px;border-radius:12px;flex:1"><b>30</b><br><small>jogadores por partida</small></div>
+<div style="background:#24343a;padding:12px;border-radius:12px;flex:1"><b>1ª pessoa</b><br><small>câmera</small></div></div>
+<p style="text-align:left;margin:10px 0 5px"><b>Seu esquadrão</b></p>
+<div id="teamSlots" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;text-align:left">
+<div class="pill">👑 Você · líder</div><div class="pill" id="slot2">＋ Vaga 2</div><div class="pill" id="slot3">＋ Vaga 3</div><div class="pill" id="slot4">＋ Vaga 4</div></div>
+<div style="display:flex;gap:7px;margin-top:10px"><input id="friendName" placeholder="Apelido do amigo" style="min-width:0;flex:1;padding:11px;border-radius:9px;border:1px solid #aaa;font-size:15px"><button id="invite" style="border:0;border-radius:9px;background:#d99b25;color:#171717;font-weight:900;padding:0 12px">CONVIDAR</button></div>
+<small id="lobbyNote" style="display:block;margin-top:9px">Convites e partidas online serão ativados quando conectarmos o servidor multiplayer. Por enquanto, o lobby é uma demonstração local.</small>
+<button id="play" type="button" onclick="window.startPizzaMatch && window.startPizzaMatch()" style="width:100%;border:0;border-radius:12px;background:#e84b2b;color:#fff;font-weight:900;padding:14px;font-size:18px;margin-top:13px">BUSCAR PARTIDA (DEMO)</button>
+</div></div>
+<script>
+(()=> {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W,H,started=false,gameOver=false,player,bots,ammo,reserve,hp,kills,zone,gun,loot,fireFlash=0,last=0,matchTime=0,zoneDamage=0;
+const map=["111111111111111111111111","100000000000000000000001","100011100000000011100001","100010000000000000100001","100010011100111000100001","100000010000001000000001","101110010000001001110101","100000000000000000000001","100001110000011100000001","100000010000010000000001","100000010000010000000001","100011000000000001100001","100000000000000000000001","100111000111000011100001","100000000000000000000001","111111111111111111111111"],mw=24,mh=16;
+function resize(){W=canvas.width=innerWidth*devicePixelRatio;H=canvas.height=innerHeight*devicePixelRatio}addEventListener('resize',resize);resize();
+const el=id=>document.getElementById(id);
+function wall(x,y){let a=Math.floor(x),b=Math.floor(y);return a<0||b<0||a>=mw||b>=mh||map[b][a]==='1'}
+function ray(x,y,a,max=22){for(let d=0;d<max;d+=.045)if(wall(x+Math.cos(a)*d,y+Math.sin(a)*d))return d;return max}
+function reset(){player={x:2.5,y:2.5,a:.25};bots=[];matchTime=0;zoneDamage=0;el('endScreen').style.display='none';el('msg').textContent='';for(let i=0;i<29;i++){let x,y,n=0;do{x=2+Math.random()*20;y=2+Math.random()*12;n++}while(wall(x,y)&&n<100);bots.push({x,y,hp:100,alive:true,cd:1+Math.random()*3,name:'Jogador '+(i+2)})}loot={x:7.5,y:7.5,taken:false};ammo=12;reserve=48;hp=100;kills=0;zone=90;gun='Pistola';gameOver=false}
+const fov=Math.PI/2.7;
+function draw(){
+ if(!started)return;
+ const sky=ctx.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,'#6e9ba3');sky.addColorStop(1,'#c4c09c');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H/2);
+ const floor=ctx.createLinearGradient(0,H/2,0,H);floor.addColorStop(0,'#596b4a');floor.addColorStop(1,'#15271d');ctx.fillStyle=floor;ctx.fillRect(0,H/2,W,H/2);
+ let zbuf=[];
+ for(let sx=0;sx<W;sx+=2){let a=player.a-Math.atan((sx/W-.5)*2*Math.tan(fov/2)),d=ray(player.x,player.y,a),corr=d*Math.cos(a-player.a),hh=Math.min(H,H/(corr+.001));zbuf[Math.floor(sx/2)]=corr;let shade=Math.max(30,175-corr*12);ctx.fillStyle=`rgb(${shade*.72},${shade*.82},${shade*.68})`;ctx.fillRect(sx,(H-hh)/2,2,hh)}
+ function sprite(x,y,col,size=1){let dx=x-player.x,dy=y-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;if(Math.abs(a)>fov/2||d<.2)return;let sx=W/2+a/(fov/2)*(W/2),h=Math.min(H,H/(d*.78))*size;if(d>zbuf[Math.max(0,Math.min(zbuf.length-1,Math.floor(sx/2)))]+.3)return;ctx.fillStyle=col;ctx.fillRect(sx-h*.17,H/2-h*.42,h*.34,h*.42);ctx.fillStyle='#d0a17e';ctx.beginPath();ctx.arc(sx,H/2-h*.5,h*.11,0,7);ctx.fill();ctx.fillStyle='#202a30';ctx.fillRect(sx-h*.2,H/2-h*.04,h*.4,h*.34)}
+ let visible=bots.filter(b=>b.alive).map(b=>({x:b.x,y:b.y,c:'#b84937'}));if(!loot.taken)visible.push({x:loot.x,y:loot.y,c:'#f3c34f'});visible.sort((a,b)=>Math.hypot(b.x-player.x,b.y-player.y)-Math.hypot(a.x-player.x,a.y-player.y));visible.forEach(o=>sprite(o.x,o.y,o.c,o.c==='#f3c34f'?.6:1));
+ // arma em primeiro plano
+ ctx.fillStyle='#20272b';ctx.fillRect(W*.54,H*.83,W*.19,H*.055);ctx.fillStyle='#9b7954';ctx.fillRect(W*.61,H*.805,W*.045,H*.08);
+ if(fireFlash>0){ctx.fillStyle='#ffd66b';ctx.beginPath();ctx.arc(W*.64,H*.79,22*devicePixelRatio,0,7);ctx.fill();fireFlash--}
+}
+function update(dt){if(!started||gameOver)return;matchTime+=dt;zone=Math.max(0,zone-dt);
+ bots.forEach((b,i)=>{if(!b.alive)return;let target=player,dx=player.x-b.x,dy=player.y-b.y,d=Math.hypot(dx,dy);
+ // Bots também se enfrentam para simular uma partida Battle Royale.
+ if(Math.random()<.012){let other=bots.find((o,j)=>j!==i&&o.alive&&Math.hypot(o.x-b.x,o.y-b.y)<5);if(other){other.hp-=18;if(other.hp<=0){other.alive=false;}}}
+ if(d>1.8){let a=Math.atan2(dy,dx),nx=b.x+Math.cos(a)*dt*.22,ny=b.y+Math.sin(a)*dt*.22;if(!wall(nx,b.y))b.x=nx;if(!wall(b.x,ny))b.y=ny}b.cd-=dt;if(d<8&&b.cd<=0){b.cd=1.5+Math.random()*2;if(Math.random()<.25)hp=Math.max(0,hp-(zone<35?10:6))}});
+ if(hp<=0){finish(false);}
+ if(zone===0){zoneDamage+=dt;if(zoneDamage>.8){zoneDamage=0;hp=Math.max(0,hp-3)}}
+ if(bots.every(b=>!b.alive)){finish(true);}
+ let alive=bots.filter(b=>b.alive).length+1;el('alive').textContent=alive+'/30 vivos';el('hp').textContent='❤ '+hp;el('kills').textContent='Eliminações: '+kills;el('zone').textContent='Zona fecha em '+Math.ceil(zone)+'s';el('weapon').textContent=gun+' · '+ammo+'/'+reserve;
+}
+function finish(win){if(gameOver)return;gameOver=true;el('endTitle').textContent=win?'VITÓRIA ROYALE!':'VOCÊ FOI ELIMINADO';el('endText').textContent=(win?'Você venceu a partida! ':'Partida encerrada. ')+'Eliminações: '+kills+' · Tempo: '+Math.floor(matchTime)+'s';el('endScreen').style.display='flex';}
+function shoot(){if(!started||gameOver)return;if(ammo<=0){el('msg').textContent='SEM MUNIÇÃO';return}ammo--;fireFlash=3;let target=null,best=99;for(let b of bots){if(!b.alive)continue;let dx=b.x-player.x,dy=b.y-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;if(Math.abs(a)<.075&&d<best&&ray(player.x,player.y,Math.atan2(dy,dx),d)>.0){best=d;target=b}}if(target){target.hp-=gun==='Fuzil'?55:35;if(target.hp<=0){target.alive=false;kills++;el('msg').textContent='ELIMINAÇÃO!';setTimeout(()=>{if(el('msg').textContent==='ELIMINAÇÃO!')el('msg').textContent=''},850)}}}
+function reload(){let cap=gun==='Fuzil'?30:12;let n=Math.min(cap-ammo,reserve);ammo+=n;reserve-=n}
+function pickup(){if(Math.hypot(player.x-loot.x,player.y-loot.y)<2.2&&!loot.taken){loot.taken=true;gun='Fuzil';ammo=30;reserve=90;el('msg').textContent='FUZIL COLETADO!';setTimeout(()=>el('msg').textContent='',1200)}else{el('msg').textContent='CHEGUE PERTO DA CAIXA AMARELA';setTimeout(()=>el('msg').textContent='',1000)}}
+let move={x:0,y:0},stick=el('stick'),nub=el('nub'),drag=null,lastX=0;
+stick.addEventListener('pointerdown',e=>{drag='move';stick.setPointerCapture(e.pointerId);moveAt(e)});
+stick.addEventListener('pointermove',e=>{if(drag==='move')moveAt(e)});
+function moveAt(e){let r=stick.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),k=Math.min(1,55/(len||1));move={x:dx*k/55,y:dy*k/55};nub.style.transform=`translate(${move.x*35}px,${move.y*35}px)`}
+function endMove(){drag=null;move={x:0,y:0};nub.style.transform=''}
+stick.addEventListener('pointerup',endMove);stick.addEventListener('pointercancel',endMove);
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#stick,#fire,#reload,#loot,#start'))return;drag='look';lastX=e.clientX});
+document.addEventListener('pointermove',e=>{if(drag==='look'){let dx=e.clientX-lastX;player.a+=dx*.008;lastX=e.clientX}});
+document.addEventListener('pointerup',()=>{if(drag==='look')drag=null});
+el('fire').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});el('reload').onclick=reload;el('loot').onclick=pickup;
+function loop(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;if(started&&!gameOver){let a=player.a,forward=-move.y,side=move.x,speed=dt*2.5;let nx=player.x+(Math.cos(a)*forward-Math.sin(a)*side)*speed,ny=player.y+(Math.sin(a)*forward+Math.cos(a)*side)*speed;if(!wall(nx,player.y))player.x=nx;if(!wall(player.x,ny))player.y=ny;update(dt);draw()}requestAnimationFrame(loop)}
+function enterDemo(name,method){el('authPanel').style.display='none';el('lobbyPanel').style.display='block';el('welcome').textContent='Olá, '+name+'! ('+method+').';}
+el('googleLogin').onclick=()=>{el('authNote').textContent='Login Google ainda não está conectado. A integração OAuth e o backend seguro serão configurados na etapa de contas online.';};
+el('appleLogin').onclick=()=>{el('authNote').textContent='Login Apple ainda não está conectado. A integração Sign in with Apple e o backend seguro serão configurados na etapa de contas online.';};
+el('accountLogin').onclick=()=>{let name=el('nickname').value.trim(),pass=el('password').value;if(!name||!pass){el('authNote').textContent='Digite usuário e senha para entrar na demonstração.';return;}if(pass.length<6){el('authNote').textContent='Use uma senha com pelo menos 6 caracteres.';return;}enterDemo(name,'conta de demonstração');};
+el('guestLogin').onclick=()=>enterDemo('Convidado','acesso rápido');
+let invited=1;
+el('invite').onclick=()=>{let n=el('friendName').value.trim();if(!n){el('lobbyNote').textContent='Digite o apelido do amigo primeiro.';return;}if(invited>=4){el('lobbyNote').textContent='Seu squad já está cheio (4 jogadores).';return;}invited++;el('slot'+invited).textContent='👤 '+n;el('friendName').value='';el('lobbyNote').textContent='Amigo adicionado visualmente ao squad de demonstração. Convite online ainda não enviado.';};
+el('mode').onchange=()=>{let m=el('mode').value;el('teamSlots').style.opacity=m==='Solo'?'.45':'1';el('lobbyNote').textContent=m==='Solo'?'Modo solo selecionado.':'Modo '+m+' selecionado. Lobby online será ativado após conectar o servidor.';};
+function startMatch(){
+  try {
+    reset();
+    started=true;
+    gameOver=false;
+    el('start').style.display='none';
+    el('hud').style.display='block';
+    el('msg').textContent='PARTIDA INICIADA!';
+    setTimeout(()=>{if(started&&!gameOver)el('msg').textContent=''},1200);
+    draw();
+    requestAnimationFrame(loop);
+  } catch(err) {
+    el('lobbyNote').textContent='Erro ao iniciar: '+(err && err.message ? err.message : 'tente recarregar a página');
+    el('start').style.display='flex';
+    console.error(err);
+  }
+}
+window.startPizzaMatch=startMatch;
+el('play').addEventListener('click', e=>{e.preventDefault();startMatch();});el('again').onclick=startMatch;el('backLobby').onclick=()=>{gameOver=true;started=false;el('endScreen').style.display='none';el('start').style.display='flex';el('authPanel').style.display='none';el('lobbyPanel').style.display='block';};
+})();
+</script></body></html>
